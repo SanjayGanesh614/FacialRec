@@ -5,8 +5,8 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from matching_module import FaceMatcher
-import config
+from src.core.matching_module import FaceMatcher
+from src.core import config
 
 
 def main():

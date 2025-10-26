@@ -6,7 +6,7 @@ from chromadb.config import Settings
 import numpy as np
 from typing import List, Dict, Optional, Tuple
 import uuid
-import config
+from . import config
 
 
 class ChromaDBStorage:

@@ -1,0 +1,35 @@
+include README.md
+include LICENSE
+include requirements.txt
+include .gitignore
+include MANIFEST.in
+
+# Documentation
+recursive-include docs *.md
+recursive-include docs *.rst
+recursive-include docs *.txt
+
+# Web interface files
+recursive-include src/web/templates *.html
+recursive-include src/web/static *.css *.js *.ico
+
+# Configuration files
+include src/core/config.py
+
+# Scripts
+recursive-include scripts *.py
+
+# Tests
+recursive-include tests *.py
+
+# Data samples
+recursive-include data *.jpg *.png *.jpeg
+
+# Exclude compiled files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *~
+global-exclude __pycache__
+global-exclude .git*
+global-exclude *.so
+global-exclude *.egg-info

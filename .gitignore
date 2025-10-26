@@ -128,31 +128,62 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Project specific
-data/
-models/
-encrypted_embeddings/
-chroma_db/
+# FaceGuard AI specific
+# Encryption keys
 encryption_key.key
-*.jpg
-*.jpeg
-*.png
-*.bmp
-*.tiff
-*.gif
+*.key
 
-# IDE
+# Database files
+chroma_db/
+*.db
+*.sqlite
+
+# Uploaded images
+uploads/
+data/uploaded/
+temp_images/
+
+# Model files
+models/
+*.pth
+*.pkl
+*.h5
+*.onnx
+
+# Logs
+logs/
+*.log
+
+# Configuration files with sensitive data
+config_local.py
+.env.local
+
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS
+# OS files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
+desktop.ini
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# ChromaDB specific
+.chroma/
+chroma.sqlite3
+
+# Face recognition data
+encrypted_embeddings/
+face_data/
+
+# Test images
+test_images/
+sample_data/

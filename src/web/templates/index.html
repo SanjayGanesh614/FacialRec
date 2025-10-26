@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaceGuard AI - Advanced Facial Recognition System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 300;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 8px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-lg);
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: none;
+            border-radius: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .nav-tab:hover::before {
+            left: 100%;
+        }
+
+        .nav-tab.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .nav-tab i {
+            margin-right: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2.5rem;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-xl);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .card-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .card-title i {
+            font-size: 2.5rem;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .camera-section {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .camera-section:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .video-container {
+            position: relative;
+            display: inline-block;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 1.5rem;
+        }
+
+        video {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            display: block;
+            border-radius: 20px;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 150px;
+            justify-content: center;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--secondary-gradient);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-gradient);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-input-display:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .file-input-display i {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .preview-container {
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .preview-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 15px;
+            box-shadow: var(--shadow-lg);
+            border: 3px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .result-container {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .result-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border-left: 4px solid;
+        }
+
+        .result-card.success {
+            border-left-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .result-card.error {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .result-content {
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .nav-tab {
+                text-align: center;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .camera-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            padding: 1rem 1.5rem;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-lg);
+            color: white;
+            font-weight: 500;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 4px solid #10b981;
+        }
+
+        .notification.error {
+            border-left: 4px solid #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <header class="header">
+            <h1><i class="fas fa-shield-alt"></i> FaceGuard AI</h1>
+            <p>Advanced Facial Recognition System with Military-Grade Encryption</p>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" onclick="openTab(event, 'enroll')">
+                <i class="fas fa-user-plus"></i> Enroll User
+            </button>
+            <button class="nav-tab" onclick="openTab(event, 'authenticate')">
+                <i class="fas fa-lock"></i> Authenticate
+            </button>
+            <button class="nav-tab" onclick="openTab(event, 'identify')">
+                <i class="fas fa-search"></i> Identify
+            </button>
+            <button class="nav-tab" onclick="openTab(event, 'compare')">
+                <i class="fas fa-balance-scale"></i> Compare
+            </button>
+        </nav>
+
+        <!-- Enroll Tab -->
+        <div id="enroll" class="tab-content active">
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-user-plus"></i>
+                    Enroll New User
+                </h2>
+
+                <div class="camera-section">
+                    <div class="video-container">
+                        <video id="enrollVideo" autoplay muted style="display: none;"></video>
+                        <canvas id="enrollCanvas" style="display: none;"></canvas>
+                    </div>
+                    
+                    <div class="camera-controls">
+                        <button class="btn btn-secondary" onclick="startCamera('enroll')">
+                            <i class="fas fa-camera"></i> Start Camera
+                        </button>
+                        <button class="btn btn-success" onclick="capturePhoto('enroll')" disabled id="enrollCaptureBtn">
+                            <i class="fas fa-camera-retro"></i> Capture Photo
+                        </button>
+                        <button class="btn btn-danger" onclick="stopCamera('enroll')">
+                            <i class="fas fa-stop"></i> Stop Camera
+                        </button>
+                    </div>
+                    
+                    <div id="enrollPreview" class="preview-container"></div>
+                </div>
+
+                <form id="enrollForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label" for="user_id">
+                            <i class="fas fa-id-card"></i> User ID
+                        </label>
+                        <input type="text" id="user_id" name="user_id" class="form-input" 
+                               placeholder="Enter unique user identifier" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-upload"></i> Or Upload Face Image
+                        </label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="enroll_image" name="image" class="file-input" accept="image/*">
+                            <div class="file-input-display">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                Click to upload or drag and drop
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="metadata">
+                            <i class="fas fa-tags"></i> Metadata (JSON)
+                        </label>
+                        <input type="text" id="metadata" name="metadata" class="form-input" 
+                               placeholder='{"name": "John Doe", "department": "Engineering", "role": "Developer"}'>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-user-check"></i> Enroll User
+                    </button>
+                </form>
+
+                <div id="enrollResult" class="result-container">
+                    <div class="result-card">
+                        <div class="result-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Authenticate Tab -->
+        <div id="authenticate" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-lock"></i>
+                    Authenticate User
+                </h2>
+
+                <div class="camera-section">
+                    <div class="video-container">
+                        <video id="authVideo" autoplay muted style="display: none;"></video>
+                        <canvas id="authCanvas" style="display: none;"></canvas>
+                    </div>
+                    
+                    <div class="camera-controls">
+                        <button class="btn btn-secondary" onclick="startCamera('auth')">
+                            <i class="fas fa-camera"></i> Start Camera
+                        </button>
+                        <button class="btn btn-success" onclick="capturePhoto('auth')" disabled id="authCaptureBtn">
+                            <i class="fas fa-camera-retro"></i> Capture Photo
+                        </button>
+                        <button class="btn btn-danger" onclick="stopCamera('auth')">
+                            <i class="fas fa-stop"></i> Stop Camera
+                        </button>
+                    </div>
+                    
+                    <div id="authPreview" class="preview-container"></div>
+                </div>
+
+                <form id="authForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-upload"></i> Or Upload Face Image
+                        </label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="auth_image" name="image" class="file-input" accept="image/*">
+                            <div class="file-input-display">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                Click to upload or drag and drop
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="threshold">
+                            <i class="fas fa-sliders-h"></i> Similarity Threshold
+                        </label>
+                        <input type="number" id="threshold" name="threshold" class="form-input" 
+                               step="0.1" min="0" max="1" value="0.6" 
+                               placeholder="0.0 - 1.0 (higher = more strict)">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-shield-alt"></i> Authenticate
+                    </button>
+                </form>
+
+                <div id="authResult" class="result-container">
+                    <div class="result-card">
+                        <div class="result-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Identify Tab -->
+        <div id="identify" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-search"></i>
+                    Identify User
+                </h2>
+
+                <div class="camera-section">
+                    <div class="video-container">
+                        <video id="identifyVideo" autoplay muted style="display: none;"></video>
+                        <canvas id="identifyCanvas" style="display: none;"></canvas>
+                    </div>
+                    
+                    <div class="camera-controls">
+                        <button class="btn btn-secondary" onclick="startCamera('identify')">
+                            <i class="fas fa-camera"></i> Start Camera
+                        </button>
+                        <button class="btn btn-success" onclick="capturePhoto('identify')" disabled id="identifyCaptureBtn">
+                            <i class="fas fa-camera-retro"></i> Capture Photo
+                        </button>
+                        <button class="btn btn-danger" onclick="stopCamera('identify')">
+                            <i class="fas fa-stop"></i> Stop Camera
+                        </button>
+                    </div>
+                    
+                    <div id="identifyPreview" class="preview-container"></div>
+                </div>
+
+                <form id="identifyForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-upload"></i> Or Upload Face Image
+                        </label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="identify_image" name="image" class="file-input" accept="image/*">
+                            <div class="file-input-display">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                Click to upload or drag and drop
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="identify_threshold">
+                            <i class="fas fa-sliders-h"></i> Similarity Threshold
+                        </label>
+                        <input type="number" id="identify_threshold" name="threshold" class="form-input" 
+                               step="0.1" min="0" max="1" value="0.5" 
+                               placeholder="0.0 - 1.0 (lower = more matches)">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-user-secret"></i> Identify User
+                    </button>
+                </form>
+
+                <div id="identifyResult" class="result-container">
+                    <div class="result-card">
+                        <div class="result-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compare Tab -->
+        <div id="compare" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">
+                    <i class="fas fa-balance-scale"></i>
+                    Compare Two Faces
+                </h2>
+
+                <form id="compareForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-image"></i> First Face Image
+                        </label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="image1" name="image1" class="file-input" accept="image/*" required>
+                            <div class="file-input-display">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                Upload first face image
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-images"></i> Second Face Image
+                        </label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="image2" name="image2" class="file-input" accept="image/*" required>
+                            <div class="file-input-display">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                Upload second face image
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-equals"></i> Compare Faces
+                    </button>
+                </form>
+
+                <div id="compareResult" class="result-container">
+                    <div class="result-card">
+                        <div class="result-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Processing...</div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <span id="notificationText"></span>
+    </div>
+
+    <script>
+        let currentStream = null;
+        let capturedImages = {};
+
+        // Tab functionality
+        function openTab(evt, tabName) {
+            const tabContents = document.getElementsByClassName('tab-content');
+            const navTabs = document.getElementsByClassName('nav-tab');
+            
+            // Hide all tab contents
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+            
+            // Remove active class from all nav tabs
+            for (let i = 0; i < navTabs.length; i++) {
+                navTabs[i].classList.remove('active');
+            }
+            
+            // Show selected tab and mark nav tab as active
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+            
+            // Stop any active camera when switching tabs
+            if (currentStream) {
+                stopAllCameras();
+            }
+        }
+
+        // Camera functionality
+        async function startCamera(mode) {
+            try {
+                const video = document.getElementById(mode + 'Video');
+                const captureBtn = document.getElementById(mode + 'CaptureBtn');
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    } 
+                });
+                
+                video.srcObject = stream;
+                video.style.display = 'block';
+                currentStream = stream;
+                captureBtn.disabled = false;
+                
+                showNotification('Camera started successfully', 'success');
+                
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                showNotification('Error accessing camera: ' + err.message, 'error');
+            }
+        }
+
+        function capturePhoto(mode) {
+            const video = document.getElementById(mode + 'Video');
+            const canvas = document.getElementById(mode + 'Canvas');
+            const preview = document.getElementById(mode + 'Preview');
+            
+            if (!video.srcObject) {
+                showNotification('Please start the camera first', 'error');
+                return;
+            }
+            
+            // Set canvas dimensions to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw video frame to canvas
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            // Convert to base64
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+            capturedImages[mode] = imageData;
+            
+            // Show preview
+            preview.innerHTML = `<img src="${imageData}" class="preview-image pulse" alt="Captured photo">`;
+            
+            showNotification('Photo captured successfully', 'success');
+        }
+
+        function stopCamera(mode) {
+            const video = document.getElementById(mode + 'Video');
+            const captureBtn = document.getElementById(mode + 'CaptureBtn');
+            
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            
+            video.srcObject = null;
+            video.style.display = 'none';
+            captureBtn.disabled = true;
+            
+            showNotification('Camera stopped', 'success');
+        }
+
+        function stopAllCameras() {
+            ['enroll', 'auth', 'identify'].forEach(mode => {
+                stopCamera(mode);
+            });
+        }
+
+        // UI Helper functions
+        function showLoading(show = true, text = 'Processing...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const loadingText = document.querySelector('.loading-text');
+            
+            loadingText.textContent = text;
+            overlay.style.display = show ? 'flex' : 'none';
+        }
+
+        function showResult(containerId, result) {
+            const container = document.getElementById(containerId);
+            const card = container.querySelector('.result-card');
+            const content = container.querySelector('.result-content');
+            
+            container.style.display = 'block';
+            card.className = 'result-card ' + (result.success ? 'success' : 'error');
+            content.textContent = JSON.stringify(result, null, 2);
+            
+            // Scroll to result
+            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Form submissions
+        document.getElementById('enrollForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            showLoading(true, 'Enrolling user...');
+            
+            const formData = new FormData(this);
+            
+            // Add camera data if available
+            if (capturedImages['enroll']) {
+                formData.append('camera_data', capturedImages['enroll']);
+            }
+            
+            fetch('/api/enroll', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(result => {
+                showLoading(false);
+                showResult('enrollResult', result);
+                
+                if (result.success) {
+                    showNotification('User enrolled successfully!', 'success');
+                    // Clear captured image
+                    delete capturedImages['enroll'];
+                    document.getElementById('enrollPreview').innerHTML = '';
+                    this.reset();
+                } else {
+                    showNotification('Enrollment failed: ' + result.error, 'error');
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                showResult('enrollResult', {success: false, error: error.message});
+                showNotification('Network error occurred', 'error');
+            });
+        });
+
+        document.getElementById('authForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            showLoading(true, 'Authenticating user...');
+            
+            const formData = new FormData(this);
+            
+            // Add camera data if available
+            if (capturedImages['auth']) {
+                formData.append('camera_data', capturedImages['auth']);
+            }
+            
+            fetch('/api/authenticate', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(result => {
+                showLoading(false);
+                showResult('authResult', result);
+                
+                if (result.success && result.authenticated) {
+                    showNotification(`Authentication successful! User: ${result.user_id}`, 'success');
+                } else if (result.success && !result.authenticated) {
+                    showNotification('Authentication failed: No matching user found', 'error');
+                } else {
+                    showNotification('Authentication error: ' + result.error, 'error');
+                }
+                
+                // Clear captured image
+                delete capturedImages['auth'];
+                document.getElementById('authPreview').innerHTML = '';
+            })
+            .catch(error => {
+                showLoading(false);
+                showResult('authResult', {success: false, error: error.message});
+                showNotification('Network error occurred', 'error');
+            });
+        });
+
+        document.getElementById('identifyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            showLoading(true, 'Identifying user...');
+            
+            const formData = new FormData(this);
+            
+            // Add camera data if available
+            if (capturedImages['identify']) {
+                formData.append('camera_data', capturedImages['identify']);
+            }
+            
+            fetch('/api/identify', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(result => {
+                showLoading(false);
+                showResult('identifyResult', result);
+                
+                if (result.success) {
+                    const matchCount = result.total_matches || 0;
+                    showNotification(`Identification complete! Found ${matchCount} matches`, 'success');
+                } else {
+                    showNotification('Identification error: ' + result.error, 'error');
+                }
+                
+                // Clear captured image
+                delete capturedImages['identify'];
+                document.getElementById('identifyPreview').innerHTML = '';
+            })
+            .catch(error => {
+                showLoading(false);
+                showResult('identifyResult', {success: false, error: error.message});
+                showNotification('Network error occurred', 'error');
+            });
+        });
+
+        document.getElementById('compareForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            showLoading(true, 'Comparing faces...');
+            
+            const formData = new FormData(this);
+            
+            fetch('/api/compare', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(result => {
+                showLoading(false);
+                showResult('compareResult', result);
+                
+                if (result.success) {
+                    const similarity = (result.similarity * 100).toFixed(1);
+                    const message = result.same_person ? 
+                        `Same person detected! Similarity: ${similarity}%` : 
+                        `Different persons. Similarity: ${similarity}%`;
+                    showNotification(message, 'success');
+                } else {
+                    showNotification('Comparison error: ' + result.error, 'error');
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                showResult('compareResult', {success: false, error: error.message});
+                showNotification('Network error occurred', 'error');
+            });
+        });
+
+        // File input enhancements
+        document.querySelectorAll('.file-input').forEach(input => {
+            input.addEventListener('change', function() {
+                const display = this.parentElement.querySelector('.file-input-display');
+                if (this.files.length > 0) {
+                    display.innerHTML = `<i class="fas fa-check"></i> ${this.files[0].name}`;
+                    display.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+                    display.style.background = 'rgba(16, 185, 129, 0.1)';
+                } else {
+                    display.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Click to upload or drag and drop';
+                    display.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                    display.style.background = 'rgba(255, 255, 255, 0.05)';
+                }
+            });
+        });
+
+        // Clean up camera when page unloads
+        window.addEventListener('beforeunload', function() {
+            stopAllCameras();
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            showNotification('FaceGuard AI System Ready', 'success');
+        });
+    </script>
+</body>
+</html>
