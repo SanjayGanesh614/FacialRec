@@ -96,7 +96,9 @@ class FaceMatcher:
             encrypted_embeddings = []
             for embedding in valid_embeddings:
                 encrypted_data, iv = self.encryptor.encrypt_embedding(embedding)
-                encrypted_embeddings.append(encrypted_data)
+                # Combine IV and encrypted data for storage
+                combined_data = iv + encrypted_data
+                encrypted_embeddings.append(combined_data)
             
             # Store in ChromaDB
             embedding_ids = self.storage.add_embeddings_batch(
@@ -105,14 +107,25 @@ class FaceMatcher:
                 metadatas=[metadata] * len(encrypted_embeddings) if metadata else None
             )
             
+            # Convert numpy types to Python types for JSON serialization
+            face_locations = []
+            detected_faces = self.face_detector.detect_faces(image)
+            for face_info in detected_faces:
+                box = face_info.get('box', [])
+                if isinstance(box, np.ndarray):
+                    box = box.tolist()
+                elif isinstance(box, list):
+                    box = [int(x) if isinstance(x, (np.integer, np.int32, np.int64)) else float(x) if isinstance(x, (np.floating, np.float32, np.float64)) else x for x in box]
+                face_locations.append(box)
+            
             return {
                 'success': True,
                 'user_id': user_id,
-                'faces_detected': len(faces),
-                'embeddings_created': len(valid_embeddings),
+                'faces_detected': int(len(faces)),
+                'embeddings_created': int(len(valid_embeddings)),
                 'embedding_ids': embedding_ids,
                 'saved_image_path': saved_image_path,
-                'face_locations': [face_info.get('box', []) for face_info in self.face_detector.detect_faces(image)]
+                'face_locations': face_locations
             }
             
         except Exception as e:
@@ -177,14 +190,22 @@ class FaceMatcher:
             
             # Encrypt query embedding
             encrypted_data, iv = self.encryptor.encrypt_embedding(embedding)
+            # Combine IV and encrypted data
+            combined_query_data = iv + encrypted_data
             
             # Search for similar embeddings
             threshold = threshold or config.SIMILARITY_THRESHOLD
+            print(f"Searching for similar embeddings with threshold: {threshold}")
+            print(f"Query embedding shape: {embedding.shape}")
+            print(f"Combined query data length: {len(combined_query_data)}")
+            
             similar_embeddings = self.storage.search_similar(
-                query_encrypted_embedding=encrypted_data,
+                query_encrypted_embedding=combined_query_data,
                 n_results=5,
                 threshold=threshold
             )
+            
+            print(f"Found {len(similar_embeddings)} similar embeddings")
             
             if similar_embeddings:
                 best_match = similar_embeddings[0]
@@ -192,8 +213,8 @@ class FaceMatcher:
                     'success': True,
                     'authenticated': True,
                     'user_id': best_match['user_id'],
-                    'similarity': best_match['similarity'],
-                    'confidence': best_match['similarity'],
+                    'similarity': float(best_match['similarity']),
+                    'confidence': float(best_match['similarity']),
                     'all_matches': similar_embeddings
                 }
             else:
@@ -266,11 +287,13 @@ class FaceMatcher:
             
             # Encrypt query embedding
             encrypted_data, iv = self.encryptor.encrypt_embedding(embedding)
+            # Combine IV and encrypted data
+            combined_query_data = iv + encrypted_data
             
             # Search for similar embeddings
             threshold = threshold or config.SIMILARITY_THRESHOLD
             similar_embeddings = self.storage.search_similar(
-                query_encrypted_embedding=encrypted_data,
+                query_encrypted_embedding=combined_query_data,
                 n_results=10,
                 threshold=threshold
             )
@@ -352,8 +375,8 @@ class FaceMatcher:
             
             return {
                 'success': True,
-                'similarity': similarity,
-                'same_person': similarity >= config.SIMILARITY_THRESHOLD
+                'similarity': float(similarity),
+                'same_person': bool(similarity >= config.SIMILARITY_THRESHOLD)
             }
             
         except Exception as e:

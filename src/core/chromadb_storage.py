@@ -33,7 +33,9 @@ class ChromaDBStorage:
         # Get or create collection
         try:
             self.collection = self.client.get_collection(config.CHROMA_COLLECTION_NAME)
-        except:
+            print(f"Using existing ChromaDB collection: {config.CHROMA_COLLECTION_NAME}")
+        except Exception as e:
+            print(f"Creating new ChromaDB collection: {config.CHROMA_COLLECTION_NAME}")
             self.collection = self.client.create_collection(
                 name=config.CHROMA_COLLECTION_NAME,
                 metadata={"description": "Encrypted face embeddings storage"}
@@ -66,8 +68,8 @@ class ChromaDBStorage:
         
         # Convert encrypted bytes to list for ChromaDB
         # ChromaDB expects embeddings as lists of floats
-        # We'll store the encrypted data as a list of bytes converted to floats
-        encrypted_list = list(encrypted_embedding)
+        # We'll store the encrypted data as a list of bytes converted to floats (0-255 range)
+        encrypted_list = [float(b) for b in encrypted_embedding]
         
         # Add to collection
         self.collection.add(
@@ -112,7 +114,7 @@ class ChromaDBStorage:
             metadata_list.append(embedding_metadata)
             
             # Convert to list
-            embeddings_list.append(list(encrypted_embedding))
+            embeddings_list.append([float(b) for b in encrypted_embedding])
         
         # Add to collection
         self.collection.add(
@@ -126,7 +128,7 @@ class ChromaDBStorage:
     def search_similar(self, query_encrypted_embedding: bytes, n_results: int = 5, 
                       threshold: float = None) -> List[Dict]:
         """
-        Search for similar encrypted embeddings.
+        Search for similar encrypted embeddings by decrypting and comparing.
         
         Args:
             query_encrypted_embedding: Encrypted query embedding
@@ -136,41 +138,115 @@ class ChromaDBStorage:
         Returns:
             List of similar embeddings with metadata and distances
         """
-        # Convert query to list
-        query_list = list(query_encrypted_embedding)
-        
-        # Search in ChromaDB
-        results = self.collection.query(
-            query_embeddings=[query_list],
-            n_results=n_results,
-            include=['metadatas', 'distances']
-        )
-        
-        # Process results
-        similar_embeddings = []
-        
-        if results['ids'] and results['ids'][0]:
-            for i, (embedding_id, distance, metadata) in enumerate(zip(
-                results['ids'][0],
-                results['distances'][0],
-                results['metadatas'][0]
+        try:
+            # Get all embeddings from the database
+            try:
+                all_results = self.collection.get(
+                    include=['embeddings', 'metadatas']
+                )
+            except Exception as e:
+                print(f"Error getting embeddings from collection: {e}")
+                return []
+            
+            if not all_results['ids']:
+                return []
+            
+            # We need to decrypt and compare embeddings manually
+            # This is a temporary solution - in production, you'd want a more efficient approach
+            from .encryption import EmbeddingEncryptor
+            encryptor = EmbeddingEncryptor()
+            
+            # Decrypt query embedding
+            query_iv = query_encrypted_embedding[:16]  # First 16 bytes as IV
+            query_encrypted_data = query_encrypted_embedding[16:]  # Rest is encrypted data
+            query_embedding = encryptor.decrypt_embedding(query_encrypted_data, query_iv)
+            
+            if query_embedding is None:
+                print("Failed to decrypt query embedding")
+                return []
+            
+            similarities = []
+            
+            # Compare with all stored embeddings
+            print(f"Comparing query with {len(all_results['ids'])} stored embeddings")
+            
+            for i, (embedding_id, encrypted_data, metadata) in enumerate(zip(
+                all_results['ids'],
+                all_results['embeddings'], 
+                all_results['metadatas']
             )):
-                # Convert distance to similarity (ChromaDB uses cosine distance)
-                similarity = 1 - distance
-                
-                # Apply threshold if specified
-                if threshold is not None and similarity < threshold:
+                try:
+                    # Convert list back to bytes (handle float to int conversion)
+                    encrypted_bytes = bytes([int(b) for b in encrypted_data])
+                    
+                    # Extract IV and encrypted data
+                    stored_iv = encrypted_bytes[:16]  # First 16 bytes as IV
+                    stored_encrypted_data = encrypted_bytes[16:]  # Rest is encrypted data
+                    
+                    # Decrypt stored embedding
+                    stored_embedding = encryptor.decrypt_embedding(stored_encrypted_data, stored_iv)
+                    
+                    if stored_embedding is not None:
+                        # Calculate cosine similarity
+                        similarity = self._calculate_cosine_similarity(query_embedding, stored_embedding)
+                        print(f"Similarity with {metadata['user_id']}: {similarity:.4f}")
+                        
+                        similarities.append({
+                            'id': embedding_id,
+                            'user_id': metadata['user_id'],
+                            'similarity': float(similarity),
+                            'distance': float(1 - similarity),
+                            'metadata': metadata
+                        })
+                    else:
+                        print(f"Failed to decrypt embedding {embedding_id}")
+                        
+                except Exception as e:
+                    print(f"Error processing embedding {embedding_id}: {e}")
                     continue
-                
-                similar_embeddings.append({
-                    'id': embedding_id,
-                    'user_id': metadata['user_id'],
-                    'similarity': similarity,
-                    'distance': distance,
-                    'metadata': metadata
-                })
-        
-        return similar_embeddings
+            
+            # Sort by similarity (highest first)
+            similarities.sort(key=lambda x: x['similarity'], reverse=True)
+            
+            # Apply threshold filter
+            if threshold is not None:
+                similarities = [s for s in similarities if s['similarity'] >= threshold]
+            
+            # Return top n_results
+            return similarities[:n_results]
+            
+        except Exception as e:
+            print(f"Error in similarity search: {e}")
+            return []
+    
+    def _calculate_cosine_similarity(self, embedding1: np.ndarray, embedding2: np.ndarray) -> float:
+        """Calculate cosine similarity between two embeddings."""
+        try:
+            print(f"Calculating similarity between embeddings of shapes: {embedding1.shape} and {embedding2.shape}")
+            
+            # Normalize embeddings
+            norm1 = np.linalg.norm(embedding1)
+            norm2 = np.linalg.norm(embedding2)
+            
+            print(f"Embedding norms: {norm1:.4f}, {norm2:.4f}")
+            
+            if norm1 == 0 or norm2 == 0:
+                print("One of the embeddings has zero norm")
+                return 0.0
+            
+            # Calculate cosine similarity
+            similarity = np.dot(embedding1, embedding2) / (norm1 * norm2)
+            print(f"Raw cosine similarity: {similarity:.4f}")
+            
+            # Ensure result is in [0, 1] range
+            similarity = (similarity + 1) / 2
+            print(f"Normalized similarity: {similarity:.4f}")
+            
+            return float(similarity)
+            
+        except Exception as e:
+            print(f"Error calculating similarity: {e}")
+            return 0.0
     
     def get_embedding_by_id(self, embedding_id: str) -> Optional[Dict]:
         """
@@ -191,7 +267,7 @@ class ChromaDBStorage:
             if results['ids']:
                 return {
                     'id': results['ids'][0],
-                    'embedding': bytes(results['embeddings'][0]),
+                    'embedding': bytes([int(b) for b in results['embeddings'][0]]),
                     'metadata': results['metadatas'][0]
                 }
         except Exception as e:
@@ -219,7 +295,7 @@ class ChromaDBStorage:
             for i, embedding_id in enumerate(results['ids']):
                 embeddings.append({
                     'id': embedding_id,
-                    'embedding': bytes(results['embeddings'][i]),
+                    'embedding': bytes([int(b) for b in results['embeddings'][i]]),
                     'metadata': results['metadatas'][i]
                 })
             
