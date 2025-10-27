@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FaceGuard AI Test</title>
+</head>
+<body>
+    <h1>FaceGuard AI API Test</h1>
+    
+    <h2>Test Enrollment</h2>
+    <form id="testForm">
+        <input type="text" id="userId" placeholder="User ID" value="web_test_user">
+        <input type="file" id="imageFile" accept="image/*">
+        <button type="button" onclick="testEnroll()">Test Enroll</button>
+    </form>
+    
+    <h2>Results</h2>
+    <div id="results"></div>
+    
+    <script>
+        async function testEnroll() {
+            const userId = document.getElementById('userId').value;
+            const fileInput = document.getElementById('imageFile');
+            const resultsDiv = document.getElementById('results');
+            
+            if (!userId || !fileInput.files[0]) {
+                resultsDiv.innerHTML = '<p style="color: red;">Please enter User ID and select an image</p>';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('user_id', userId);
+            formData.append('image', fileInput.files[0]);
+            
+            try {
+                resultsDiv.innerHTML = '<p>Processing...</p>';
+                
+                const response = await fetch('/api/enroll', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                resultsDiv.innerHTML = `
+                    <h3>Response Status: ${response.status}</h3>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
